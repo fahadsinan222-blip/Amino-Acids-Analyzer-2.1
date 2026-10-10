@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Amino Acids Analyzer</title>
+    </head>
+    <body>
+        <form id="form" >
+            <div>
+            <input type="text" placeholder="First Name" size="30" name="first_name" required>
+           
+            <input type="text" placeholder="Last Name" size="30" name="last_name" required>
+            </div>
+            <br>
+            <input type="email" placeholder="Email" size="30" name="email" required>
+            
+            <input type="tel" placeholder="Phone" size="30" name="phone" required>
+            <div>
+                <br>
+                <input type="text" placeholder="Gender" size="30" name="gender" required>
+                <input type="date" placeholder="Birth Date" size="30" name="birth_date" required>
+            </div>
+            <label for="education">Education Level:</label> 
+            <label for="education">Master</label>
+            <input type="radio" placeholder="Master" name="education" value="Master" required> 
+              <label for="education">PhD</label>  
+            <input type="radio" placeholder="PhD" name="education" value="PhD" required>
+                
+            <label for="education">Student</label>
+            <input type="radio" placeholder="student" name="education" value="student" required>
+            <label for="education">Researcher</label>
+            <input type="radio" placeholder="researcher" name="education" value="researcher" required>
+            <label for="education">Other</label>
+            <input type="radio" placeholder="other" name="education" value="other" required>
+             <div>
+            <br>
+                <button type="button"  Id=sbutton  style="width: 150px; height: 40px; color: white; background-color: #007bff; border: none; cursor: pointer; border-radius: 999px; font-size: 16px; "disabled>
+                    start analysis
+                </button>
+                <button type="button"  Id=dbutton  style="width: 150px; height: 40px; color: white; background-color: #007bff; border: none; cursor: pointer; border-radius: 999px; font-size: 16px; "disabled>
+                    learn more
+                </button>
+                <div></div>
+                <br>
+                <button type="button"  Id=ybutton  style="width: 300px; height: 40px; color: white; background-color: #007bff; border: none; cursor: pointer; border-radius: 999px; font-size: 16px; "disabled>
+                    Contact Me
+                </button>
+             </div>
+             </div>
+        
+            </form>
+            
+
+<script>
+    const form = document.getElementById('form');
+
+    const startanalysisbtn = document.getElementById('sbutton');
+    const learnmorebtn = document.getElementById('dbutton');
+    const contactbtn = document.getElementById('ybutton');
+
+    const buttons = [
+        startanalysisbtn,
+        learnmorebtn,
+        contactbtn
+    ];
+
+    function checkForm() {
+        const isValid = form.checkValidity();
+
+        buttons.forEach(function(button) {
+            button.disabled = !isValid;
+        });
+    }
+
+    form.addEventListener('input', checkForm);
+    form.addEventListener('change', checkForm);
+
+    startanalysisbtn.addEventListener('click', function() {
+        window.location.href = 'analyzer.html';
+    });
+
+    learnmorebtn.addEventListener('click', function() {
+        window.location.href = 'learn_more.html';
+    });
+
+    contactbtn.addEventListener('click', function() {
+        window.location.href = 'contact.html';
+    });
+
+    checkForm();
+</script>
+
+
+    </body>
+</html>

@@ -1,0 +1,646 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Amino Acid Analyzer</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px auto;
+            padding: 20px;
+            max-width: 650px;
+            background-color: #fdfdfd;
+            color: #222;
+        }
+
+        h1 {
+            color: #007BFF;
+            text-align: center;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .results-box {
+            display: none;
+            background-color: #f8f9fa;
+            border-left: 5px solid #28a745;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            overflow-wrap: anywhere;
+        }
+
+        .error-box {
+            display: none;
+            background-color: #fde8e8;
+            border-left: 5px solid #dc3545;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            color: #bd2130;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        li:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                margin: 10px auto;
+                padding: 15px;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Amino Acid Analyzer</h1>
+
+    <p>
+        Enter the full name of any of the 20 standard amino acids,
+        its three-letter code, or its one-letter code.
+    </p>
+
+    <form id="analyzerForm">
+        <div class="form-row">
+            <input
+                type="text"
+                id="amino_acid_input"
+                placeholder="e.g., Alanine, Trp, K, Aspartic acid"
+                autocomplete="off"
+                aria-label="Amino acid name or code"
+            >
+
+            <button type="submit" id="analyzeBtn">
+                Analyze
+            </button>
+        </div>
+    </form>
+
+    <!-- Results -->
+    <div id="resultsCard" class="results-box" aria-live="polite">
+        <h2 id="resultTitle">Results</h2>
+
+        <ul>
+            <li>
+                <strong>Short Code:</strong>
+                <span id="res_code"></span>
+            </li>
+
+            <li>
+                <strong>Molecular Formula:</strong>
+                <span id="res_formula"></span>
+            </li>
+
+            <li>
+                <strong>Molar Mass:</strong>
+                <span id="res_weight"></span>
+            </li>
+
+            <li>
+                <strong>Classification:</strong>
+                <span id="res_type"></span>
+            </li>
+
+            <li>
+                <strong>Polarity:</strong>
+                <span id="res_polarity"></span>
+            </li>
+
+            <li>
+                <strong>Charge:</strong>
+                <span id="res_charge"></span>
+            </li>
+
+            <li>
+                <strong>Side Chain:</strong>
+                <span id="res_side_chain"></span>
+            </li>
+
+            <li>
+                <strong>Isoelectric Point (pI):</strong>
+                <span id="res_pi"></span>
+            </li>
+
+            <li>
+                <strong>Essential Amino Acid:</strong>
+                <span id="res_essential"></span>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Error message -->
+    <div id="errorCard" class="error-box" role="alert"></div>
+
+    <script>
+        // 1. Database of the 20 standard amino acids
+
+        const aminoAcids = {
+            "alanine": {
+                code_3: "Ala",
+                code_1: "A",
+                formula: "C3H7NO2",
+                weight: "89.09 g/mol",
+                essential: "No",
+                polarity: "Nonpolar",
+                charge: "Neutral",
+                side_chain: "CH3",
+                pi: "6.01",
+                type: "Aliphatic"
+            },
+
+            "arginine": {
+                code_3: "Arg",
+                code_1: "R",
+                formula: "C6H14N4O2",
+                weight: "174.20 g/mol",
+                essential: "Yes",
+                polarity: "Polar",
+                charge: "Positive",
+                side_chain: "(CH2)3NHC(NH2)2",
+                pi: "10.76",
+                type: "Basic"
+            },
+
+            "asparagine": {
+                code_3: "Asn",
+                code_1: "N",
+                formula: "C4H8N2O3",
+                weight: "132.12 g/mol",
+                essential: "No",
+                polarity: "Polar",
+                charge: "Neutral",
+                side_chain: "CH2CONH2",
+                pi: "5.41",
+                type: "Amide"
+            },
+
+            "aspartic acid": {
+                code_3: "Asp",
+                code_1: "D",
+                formula: "C4H7NO4",
+                weight: "133.10 g/mol",
+                essential: "No",
+                polarity: "Polar",
+                charge: "Negative",
+                side_chain: "CH2COOH",
+                pi: "2.77",
+                type: "Acidic"
+            },
+
+            "cysteine": {
+                code_3: "Cys",
+                code_1: "C",
+                formula: "C3H7NO2S",
+                weight: "121.16 g/mol",
+                essential: "No",
+                polarity: "Polar",
+                charge: "Neutral",
+                side_chain: "CH2SH",
+                pi: "5.07",
+                type: "Sulfur-containing"
+            },
+
+            "glutamic acid": {
+                code_3: "Glu",
+                code_1: "E",
+                formula: "C5H9NO4",
+                weight: "147.13 g/mol",
+                essential: "No",
+                polarity: "Polar",
+                charge: "Negative",
+                side_chain: "(CH2)2COOH",
+                pi: "3.22",
+                type: "Acidic"
+            },
+
+            "glutamine": {
+                code_3: "Gln",
+                code_1: "Q",
+                formula: "C5H10N2O3",
+                weight: "146.15 g/mol",
+                essential: "No",
+                polarity: "Polar",
+                charge: "Neutral",
+                side_chain: "(CH2)2CONH2",
+                pi: "5.65",
+                type: "Amide"
+            },
+
+            "glycine": {
+                code_3: "Gly",
+                code_1: "G",
+                formula: "C2H5NO2",
+                weight: "75.07 g/mol",
+                essential: "No",
+                polarity: "Nonpolar",
+                charge: "Neutral",
+                side_chain: "H",
+                pi: "5.97",
+                type: "Aliphatic"
+            },
+
+            "histidine": {
+                code_3: "His",
+                code_1: "H",
+                formula: "C6H9N3O2",
+                weight: "155.16 g/mol",
+                essential: "Yes",
+                polarity: "Polar",
+                charge: "Positive",
+                side_chain: "Imidazole",
+                pi: "7.59",
+                type: "Basic"
+            },
+
+            "isoleucine": {
+                code_3: "Ile",
+                code_1: "I",
+                formula: "C6H13NO2",
+                weight: "131.17 g/mol",
+                essential: "Yes",
+                polarity: "Nonpolar",
+                charge: "Neutral",
+                side_chain: "CH(CH3)CH2CH3",
+                pi: "6.02",
+                type: "Branched-chain"
+            },
+
+            "leucine": {
+                code_3: "Leu",
+                code_1: "L",
+                formula: "C6H13NO2",
+                weight: "131.17 g/mol",
+                essential: "Yes",
+                polarity: "Nonpolar",
+                charge: "Neutral",
+                side_chain: "CH2CH(CH3)2",
+                pi: "5.98",
+                type: "Branched-chain"
+            },
+
+            "lysine": {
+                code_3: "Lys",
+                code_1: "K",
+                formula: "C6H14N2O2",
+                weight: "146.19 g/mol",
+                essential: "Yes",
+                polarity: "Polar",
+                charge: "Positive",
+                side_chain: "(CH2)4NH2",
+                pi: "9.74",
+                type: "Basic"
+            },
+
+            "methionine": {
+                code_3: "Met",
+                code_1: "M",
+                formula: "C5H11NO2S",
+                weight: "149.21 g/mol",
+                essential: "Yes",
+                polarity: "Nonpolar",
+                charge: "Neutral",
+                side_chain: "CH2CH2SCH3",
+                pi: "5.74",
+                type: "Sulfur-containing"
+            },
+
+            "phenylalanine": {
+                code_3: "Phe",
+                code_1: "F",
+                formula: "C9H11NO2",
+                weight: "165.19 g/mol",
+                essential: "Yes",
+                polarity: "Nonpolar",
+                charge: "Neutral",
+                side_chain: "CH2C6H5",
+                pi: "5.48",
+                type: "Aromatic"
+            },
+
+            "proline": {
+                code_3: "Pro",
+                code_1: "P",
+                formula: "C5H9NO2",
+                weight: "115.13 g/mol",
+                essential: "No",
+                polarity: "Nonpolar",
+                charge: "Neutral",
+                side_chain: "Pyrrolidine ring",
+                pi: "6.30",
+                type: "Cyclic"
+            },
+
+            "serine": {
+                code_3: "Ser",
+                code_1: "S",
+                formula: "C3H7NO3",
+                weight: "105.09 g/mol",
+                essential: "No",
+                polarity: "Polar",
+                charge: "Neutral",
+                side_chain: "CH2OH",
+                pi: "5.68",
+                type: "Hydroxyl"
+            },
+
+            "threonine": {
+                code_3: "Thr",
+                code_1: "T",
+                formula: "C4H9NO3",
+                weight: "119.12 g/mol",
+                essential: "Yes",
+                polarity: "Polar",
+                charge: "Neutral",
+                side_chain: "CHOHCH3",
+                pi: "5.60",
+                type: "Hydroxyl"
+            },
+
+            "tryptophan": {
+                code_3: "Trp",
+                code_1: "W",
+                formula: "C11H12N2O2",
+                weight: "204.23 g/mol",
+                essential: "Yes",
+                polarity: "Nonpolar",
+                charge: "Neutral",
+                side_chain: "Indole",
+                pi: "5.89",
+                type: "Aromatic"
+            },
+
+            "tyrosine": {
+                code_3: "Tyr",
+                code_1: "Y",
+                formula: "C9H11NO3",
+                weight: "181.19 g/mol",
+                essential: "No",
+                polarity: "Polar",
+                charge: "Neutral",
+                side_chain: "CH2C6H4OH",
+                pi: "5.66",
+                type: "Aromatic"
+            },
+
+            "valine": {
+                code_3: "Val",
+                code_1: "V",
+                formula: "C5H11NO2",
+                weight: "117.15 g/mol",
+                essential: "Yes",
+                polarity: "Nonpolar",
+                charge: "Neutral",
+                side_chain: "CH(CH3)2",
+                pi: "5.96",
+                type: "Branched-chain"
+            }
+        };
+
+
+        // 2. Map full names and codes to database keys
+
+        const aliases = {
+            "alanine": "alanine",
+            "ala": "alanine",
+            "a": "alanine",
+
+            "arginine": "arginine",
+            "arg": "arginine",
+            "r": "arginine",
+
+            "asparagine": "asparagine",
+            "asn": "asparagine",
+            "n": "asparagine",
+
+            "aspartic acid": "aspartic acid",
+            "asp": "aspartic acid",
+            "d": "aspartic acid",
+
+            "cysteine": "cysteine",
+            "cys": "cysteine",
+            "c": "cysteine",
+
+            "glutamic acid": "glutamic acid",
+            "glu": "glutamic acid",
+            "e": "glutamic acid",
+
+            "glutamine": "glutamine",
+            "gln": "glutamine",
+            "q": "glutamine",
+
+            "glycine": "glycine",
+            "gly": "glycine",
+            "g": "glycine",
+
+            "histidine": "histidine",
+            "his": "histidine",
+            "h": "histidine",
+
+            "isoleucine": "isoleucine",
+            "ile": "isoleucine",
+            "i": "isoleucine",
+
+            "leucine": "leucine",
+            "leu": "leucine",
+            "l": "leucine",
+
+            "lysine": "lysine",
+            "lys": "lysine",
+            "k": "lysine",
+
+            "methionine": "methionine",
+            "met": "methionine",
+            "m": "methionine",
+
+            "phenylalanine": "phenylalanine",
+            "phe": "phenylalanine",
+            "f": "phenylalanine",
+
+            "proline": "proline",
+            "pro": "proline",
+            "p": "proline",
+
+            "serine": "serine",
+            "ser": "serine",
+            "s": "serine",
+
+            "threonine": "threonine",
+            "thr": "threonine",
+            "t": "threonine",
+
+            "tryptophan": "tryptophan",
+            "trp": "tryptophan",
+            "w": "tryptophan",
+
+            "tyrosine": "tyrosine",
+            "tyr": "tyrosine",
+            "y": "tyrosine",
+
+            "valine": "valine",
+            "val": "valine",
+            "v": "valine"
+        };
+
+
+        // 3. Analyzer function
+
+        function analyzeAminoAcid() {
+            const input = document
+                .getElementById("amino_acid_input")
+                .value
+                .trim()
+                .toLowerCase();
+
+            const resultsCard = document.getElementById("resultsCard");
+            const errorCard = document.getElementById("errorCard");
+
+            // Hide old results and error messages
+            resultsCard.style.display = "none";
+            errorCard.style.display = "none";
+
+            // Check for empty input
+            if (input === "") {
+                errorCard.textContent =
+                    "Please enter an amino acid name or code.";
+                errorCard.style.display = "block";
+                return;
+            }
+
+            // Find the amino acid using its name or code
+            const targetKey = aliases[input];
+
+            if (
+                targetKey &&
+                Object.prototype.hasOwnProperty.call(aminoAcids, targetKey)
+            ) {
+                const data = aminoAcids[targetKey];
+
+                // Display the amino acid name
+                document.getElementById("resultTitle").textContent =
+                    "Results for: " +
+                    targetKey.charAt(0).toUpperCase() +
+                    targetKey.slice(1);
+
+                // Display all properties
+                document.getElementById("res_code").textContent =
+                    data.code_3 + " (" + data.code_1 + ")";
+
+                document.getElementById("res_formula").textContent =
+                    data.formula;
+
+                document.getElementById("res_weight").textContent =
+                    data.weight;
+
+                document.getElementById("res_type").textContent =
+                    data.type;
+
+                document.getElementById("res_polarity").textContent =
+                    data.polarity;
+
+                document.getElementById("res_charge").textContent =
+                    data.charge;
+
+                document.getElementById("res_side_chain").textContent =
+                    data.side_chain;
+
+                document.getElementById("res_pi").textContent =
+                    data.pi;
+
+                document.getElementById("res_essential").textContent =
+                    data.essential;
+
+                // Show the results
+                resultsCard.style.display = "block";
+
+            } else {
+                errorCard.textContent =
+                    "Amino acid not found. Please check your input and try again.";
+
+                errorCard.style.display = "block";
+            }
+        }
+
+
+        // 4. Connect the form to the analyzer
+        // This also supports pressing Enter in the input field.
+
+        document
+            .getElementById("analyzerForm")
+            .addEventListener("submit", function(event) {
+                event.preventDefault();
+                analyzeAminoAcid();
+            });
+
+    </script>
+
+</body>
+</html>
+        
+
+
+
+            
+                       
+                
+            
+
+
+
+        
+                
+
+                
+            
